@@ -6,7 +6,7 @@ import retrofit2.http.GET;
 public abstract class JApi {
 
 
-    @GET("newpaithani.json")
-    public abstract Call<NoticeList> getNoticeData();
+  //  @GET("newpaithani.json")
+ //   public abstract Call<NoticeList> getNoticeData();
 
 }

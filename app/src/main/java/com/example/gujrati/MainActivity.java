@@ -10,14 +10,15 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.Toolbar;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
+
+import com.example.gujrati.adapters.ProductAdapter;
+import com.example.gujrati.models.Example;
+import com.example.gujrati.models.Product;
+import com.example.gujrati.services.RetrofitClient;
+import com.example.gujrati.services.RetrofitInterface;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,8 +26,10 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import retrofit2.Call;
+import retrofit2.Callback;
 
 public class MainActivity extends AppCompatActivity {
     RecyclerView mRecyclerview;
@@ -43,80 +46,41 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mRecyclerview = findViewById(R.id.RecyclerView);
+        mRecyclerview = findViewById(R.id.mRecyclerViewOfr);
         mLayoutManager = new LinearLayoutManager(MainActivity.this);
         mRecyclerview.setLayoutManager(mLayoutManager);
-        callAPI();
+       // callAPI();
 
         bt=findViewById(R.id.bttoolbar);
         bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-
-                /** Create handle for the RetrofitInstance interface*/
-                JApi service = RetrofitInstance.getRetrofitInstance().create(JApi.class);
-
-                /** Call the method with parameter in the interface to get the notice data*/
-                Call<NoticeList> call = service.getNoticeData();
-
-                /**Log the URL called*/
-                Log.wtf("URL Called", call.request().url() + "http://pherywala.sparsematrix.co.in/sareeapp/sareeapp_accounts/product.php");
-
-
-
             }
         });
-    }
-    private void callAPI() {//
-        RequestQueue queue = Volley.newRequestQueue(this);
-        //String url = "https://api.myjson.com/bins/1eits2";
-        String url = "https://alkakasbe2020.000webhostapp.com/Saree_img/newpaithani.json";
-        //String url = "https://chandansatyendraprasad.000webhostapp.com/tests";
-        // Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        Log.d("=====", "=========response:" + response);
-                        parseAPIResponse(response);
-                    }
-                }, new Response.ErrorListener() {
+        LinearLayoutManager linearLayoutManager2 = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        mRecyclerview.setLayoutManager(linearLayoutManager2);
+      //  recyclerView.setLayoutManager(linearLayoutManager2);
+        RetrofitInterface retrofitService = RetrofitClient.getClient().create(RetrofitInterface.class);
+
+        Call<Example> call = retrofitService.getProducts();
+        call.enqueue(new Callback<Example>() {
             @Override
-            public void onErrorResponse(VolleyError error) {
-                //mTextView.setText("That didn't work!");
+            public void onResponse(Call<Example> call, retrofit2.Response<Example> response) {
+            /*    List<GeneralFood> popularFoods = response.body().getPopularFood();
+                recyclerViewHorizontal.setAdapter(new HorizontalAdapter(popularFoods, R.layout.recyclerview_horizontal, MainActivity.this));
+*/
+                List<Product> regularFoods = response.body().getProduct();
+                mRecyclerview.setNestedScrollingEnabled(false);
+                mRecyclerview.setAdapter(new ProductAdapter(regularFoods, R.layout.data_content, getApplicationContext()));
+            }
+
+            @Override
+            public void onFailure(Call<Example> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
             }
         });
-        queue.add(stringRequest);
+
     }
 
-    private void parseAPIResponse(String response) {
-
-        try {
-            JSONObject objResponse = new JSONObject(response);
-            JSONArray arrayHeadlines = objResponse.getJSONArray("headlines");
-            arrayListNews = new ArrayList<>();
-
-            for (int i = 0; i < arrayHeadlines.length(); i++) {
-                JSONObject objItem = arrayHeadlines.getJSONObject(i);
-                String title = objItem.getString("title");
-                String imgUrl = objItem.getString("imgUrl");
-                String description = objItem.getString("description");
-
-                HashMap<String, String> map = new HashMap<>();
-                map.put("title", title);
-                map.put("url", imgUrl);
-                map.put("detail", description);
-                arrayListNews.add(map);
-            }
-
-            //set adapter
-            mAdapter = new HomeListAdapter(MainActivity.this, arrayListNews);
-            mRecyclerview.setAdapter(mAdapter);
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
 }
